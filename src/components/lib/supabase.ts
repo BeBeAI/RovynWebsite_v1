@@ -16,6 +16,7 @@ export interface ContactSubmission {
   id: string;
   name: string;
   email: string;
+  phone: string;
   company_size: string;
   interest: string;
   message: string;
@@ -32,6 +33,7 @@ export async function submitContactForm(data: ContactFormData): Promise<void> {
   const submission = {
     name: data.name,
     email: data.email,
+    phone: data.phone,
     company_size: data.company_size,
     interest: data.interest,
     message: data.message || '',

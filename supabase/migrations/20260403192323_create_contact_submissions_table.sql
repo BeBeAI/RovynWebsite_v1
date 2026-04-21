@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS contact_submissions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   email text NOT NULL,
+  phone text,
   company_size text NOT NULL,
   interest text NOT NULL,
   message text DEFAULT '',
