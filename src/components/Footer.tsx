@@ -40,7 +40,7 @@ export function Footer() {
             <li><a href="https://www.linkedin.com/in/maxleow/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
             <li><a href="https://www.instagram.com/inaarcs/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
             <li><a href="https://x.com/inaarcs" target="_blank" rel="noopener noreferrer">X / Twitter</a></li>
-            <li><a href="mailto:hello@rovyn.ai">hello@rovyn.ai</a></li>
+            <li><a href="mailto:hi@rovyn.my">hi@rovyn.my</a></li>
           </ul>
         </div>
       </footer>
