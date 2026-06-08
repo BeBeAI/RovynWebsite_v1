@@ -1016,6 +1016,175 @@ nav.nav-scrolled .nav-wordmark {
 .form-submit:hover { opacity: 0.88; }
 .form-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.assessment {
+  padding: 7rem 1.5rem 5rem;
+  border-top: 1px solid var(--border);
+}
+
+.assessment-card {
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--mid);
+  border: 1px solid rgba(245,245,240,0.15);
+  padding: 2.5rem;
+}
+
+.assessment-progress {
+  height: 6px;
+  background: rgba(245,245,240,0.08);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.assessment-progress-bar {
+  height: 100%;
+  background: var(--white);
+  transition: width 220ms ease;
+}
+
+.assessment-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.02em;
+}
+
+.assessment-sub {
+  color: var(--dim);
+  font-size: 0.95rem;
+  margin-bottom: 1.8rem;
+}
+
+.assessment-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.assessment-option {
+  background: var(--black);
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 0.9rem 1rem;
+  text-align: left;
+  font-family: 'Alibaba Sans', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.assessment-option:hover { border-color: rgba(245,245,240,0.4); }
+
+.assessment-option.selected {
+  border-color: rgba(245,245,240,0.7);
+  background: rgba(245,245,240,0.06);
+}
+
+.assessment-actions {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.assessment-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem 0 1rem;
+}
+
+.assessment-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid rgba(245,245,240,0.2);
+  border-top-color: var(--white);
+  animation: assessment-spin 0.9s linear infinite;
+}
+
+.assessment-report {
+  display: grid;
+  gap: 1.6rem;
+}
+
+.score-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.score-high { background: rgba(76, 175, 80, 0.18); color: #9be39f; }
+.score-medium { background: rgba(255, 193, 7, 0.18); color: #f7d26a; }
+.score-low { background: rgba(244, 67, 54, 0.18); color: #f2a09a; }
+
+.assessment-headline {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 3.4vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.assessment-section {
+  display: grid;
+  gap: 0.5rem;
+  color: var(--dim);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.assessment-section-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(245,245,240,0.55);
+  font-weight: 600;
+}
+
+.assessment-honest {
+  font-style: italic;
+  color: rgba(245,245,240,0.7);
+}
+
+.assessment-cta {
+  border: 1px solid rgba(245,245,240,0.18);
+  background: rgba(245,245,240,0.04);
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.assessment-cta p {
+  color: var(--dim);
+  font-size: 0.95rem;
+}
+
+.assessment-cta .btn-primary {
+  width: fit-content;
+}
+
+.assessment-error {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 0 0;
+}
+
+@keyframes assessment-spin {
+  to { transform: rotate(360deg); }
+}
+
 footer {
   border-top: 1px solid var(--border);
   padding: 3rem 3rem 2rem;
@@ -1177,6 +1346,12 @@ footer {
   footer { grid-template-columns: 1fr; padding: 2.5rem 1.5rem; }
   .footer-bottom { flex-direction: column; gap: 0.5rem; text-align: center; padding: 1.5rem; }
   .modal { padding: 2rem; }
+  .assessment-card { padding: 2rem 1.5rem; }
+  .assessment-options { grid-template-columns: 1fr; }
+  .assessment-actions { flex-direction: column-reverse; }
+  .assessment-actions .btn-ghost,
+  .assessment-actions .btn-primary { width: 100%; justify-content: center; }
+  .assessment-cta .btn-primary { width: 100%; justify-content: center; }
 }
 
 /* Services Page Styles */
