@@ -129,12 +129,30 @@ export function AiAssessment() {
         }),
       });
 
+      const text = await response.text();
+
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.error || 'Something went wrong while generating your report.');
+        // Try to parse error details from JSON body, otherwise include raw text
+        let errorMsg = 'Something went wrong while generating your report.';
+        try {
+          const errorBody = JSON.parse(text);
+          errorMsg = errorBody?.error || JSON.stringify(errorBody);
+        } catch (parseErr) {
+          errorMsg = text || errorMsg;
+        }
+        throw new Error(errorMsg);
       }
 
-      const data = (await response.json()) as Report;
+      // Try to parse JSON but handle cases where the worker returns non-JSON
+      let data: Report;
+      try {
+        data = JSON.parse(text) as Report;
+      } catch (parseErr) {
+        // Include a helpful message showing the start of the response for debugging
+        const snippet = text?.slice(0, 500);
+        throw new Error(`Failed to parse worker JSON response: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}. Response snippet: ${snippet}`);
+      }
+
       setReport(data);
     } catch (error) {
       setErrorMessage(

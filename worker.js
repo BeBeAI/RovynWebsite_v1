@@ -106,39 +106,141 @@ const OPENROUTER_DEFAULT_MODEL = 'openrouter/owl-alpha';
         const prompt = buildPrompt(payload);
         const model = env.OPENROUTER_MODEL || OPENROUTER_DEFAULT_MODEL;
 
-        const openRouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model,
-                messages: [
-                    {
-                        role: 'system',
-                        content:
-                            'You are writing a short, honest, personalised AI Fit Report for a local business owner on behalf of Rovyn, an AI consulting agency. Be direct, specific and honest. Never use corporate fluff.',
-                    },
-                    {
-                        role: 'user',
-                        content: prompt,
-                    },
-                ],
-                temperature: 0.4,
-            }),
-        });
+        // Helper: simple sleep for backoff
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-        if (!openRouterResponse.ok) {
-            const errorText = await openRouterResponse.text();
-            throw new Error(`OpenRouter API request failed: ${errorText}`);
+        // Retry wrapper around OpenRouter request
+        async function fetchOpenRouterWithRetries(bodyObj, headers = {}, maxAttempts = 3) {
+            let attempt = 0;
+            let lastErr;
+            const bodyText = JSON.stringify(bodyObj);
+            while (++attempt <= maxAttempts) {
+                try {
+                    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: Object.assign({ Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' }, headers),
+                        body: bodyText,
+                    });
+
+                    const text = await resp.text();
+                    if (!resp.ok) {
+                        lastErr = new Error(`OpenRouter HTTP ${resp.status}: ${text.slice(0, 500)}`);
+                        throw lastErr;
+                    }
+
+                    // Try parse JSON response from OpenRouter
+                    let json;
+                    try {
+                        json = JSON.parse(text);
+                    } catch (pErr) {
+                        // Return both json=undefined and raw text for downstream parsing attempts
+                        return { json: undefined, text };
+                    }
+
+                    return { json, text };
+                } catch (err) {
+                    lastErr = err;
+                    if (attempt < maxAttempts) {
+                        // exponential backoff
+                        await sleep(200 * Math.pow(2, attempt - 1));
+                        continue;
+                    }
+                    throw lastErr;
+                }
+            }
         }
 
-        const data = await openRouterResponse.json();
-        const rawText = data?.choices?.[0]?.message?.content;
+        function extractJSON(text) {
+            const original = String(text ?? '');
+            // quick clean: remove triple backticks and common prefixes like "json " or "json:\n"
+            let cleaned = original.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+            cleaned = cleaned.replace(/^[\s\n]*json[:\s]*/i, '').trim();
+            // Try direct parse first
+            try {
+                return JSON.parse(cleaned);
+            } catch (e) {}
+
+            // Try to find the first {...} block
+            const first = cleaned.indexOf('{');
+            const last = cleaned.lastIndexOf('}');
+            if (first !== -1 && last !== -1 && last > first) {
+                const sub = cleaned.slice(first, last + 1);
+                try {
+                    return JSON.parse(sub);
+                } catch (e) {}
+            }
+
+            // Regex fallback: match the first JSON object-looking substring
+            const match = cleaned.match(/\{[\s\S]*\}/);
+            if (match) {
+                try {
+                    return JSON.parse(match[0]);
+                } catch (e) {}
+            }
+
+            // As last resort, try to strip backticks only and parse
+            try {
+                return JSON.parse(stripBackticks(original));
+            } catch (e) {}
+
+            throw new Error('Could not extract JSON from OpenRouter response');
+        }
+
+        // Build body for OpenRouter
+        const requestBody = {
+            model,
+            messages: [
+                {
+                    role: 'system',
+                    content:
+                        'You are writing a short, honest, personalised AI Fit Report for a local business owner on behalf of Rovyn, an AI consulting agency. Be direct, specific and honest. Never use corporate fluff.',
+                },
+                {
+                    role: 'user',
+                    content: prompt,
+                },
+            ],
+            temperature: 0.4,
+        };
+
+        const { json: orJson, text: orText } = await fetchOpenRouterWithRetries(requestBody, {}, 3);
+
+        // Try to obtain the rawText from parsed JSON if available, otherwise attempt to extract from raw text
+        let rawText = orJson?.choices?.[0]?.message?.content;
+        if (!rawText) {
+            // Try to parse the raw response text as JSON and re-check
+            if (orText) {
+                try {
+                    const parsed = JSON.parse(orText);
+                    rawText = parsed?.choices?.[0]?.message?.content;
+                } catch (e) {
+                    // ignore
+                }
+            }
+        }
+
+        if (!rawText && orText) {
+            // As a last resort, try to extract any JSON object from the raw response text
+            try {
+                const maybe = extractJSON(orText);
+                // If this looks like a report, use it
+                if (maybe && maybe.score) {
+                    try {
+                        await saveLeadToSupabase(env, payload, maybe);
+                    } catch (error) {
+                        console.error('Failed to save lead to Supabase:', error);
+                    }
+                    return jsonResponse(maybe);
+                }
+            } catch (e) {
+                // fallthrough to error below
+            }
+        }
 
         if (!rawText) {
-            throw new Error('OpenRouter API returned no report text');
+            // include snippet for debugging
+            const snippet = (orText || '').slice(0, 500);
+            throw new Error(`OpenRouter API returned no report text. Response snippet: ${snippet}`);
         }
 
         const reportText = Array.isArray(rawText)
@@ -150,7 +252,7 @@ const OPENROUTER_DEFAULT_MODEL = 'openrouter/owl-alpha';
         const cleanedText = stripBackticks(reportText);
 
         try {
-            const report = JSON.parse(cleanedText);
+            const report = extractJSON(cleanedText);
             try {
                 await saveLeadToSupabase(env, payload, report);
             } catch (error) {
@@ -158,9 +260,10 @@ const OPENROUTER_DEFAULT_MODEL = 'openrouter/owl-alpha';
             }
             return jsonResponse(report);
         } catch (error) {
-            throw new Error(
-                `Failed to parse OpenRouter JSON response: ${error instanceof Error ? error.message : String(error)}`
-            );
+            // include snippets to aid debugging
+            const snippet = (reportText || '').slice(0, 500);
+            const fullSnippet = (orText || '').slice(0, 1000);
+            throw new Error(`Failed to parse OpenRouter JSON response: ${error instanceof Error ? error.message : String(error)}. Report snippet: ${snippet}. Full response snippet: ${fullSnippet}`);
         }
     }
 

@@ -64,6 +64,7 @@ export function Nav({ onGetInTouch }: NavProps) {
       </Link>
       <ul className="nav-links">
         <li><Link to="/services" onClick={handleServicesClick}>Services</Link></li>
+        <li><Link to="/assessment">AI Fit Check</Link></li>
         <li><a className="nav-cta" onClick={onGetInTouch}>Get in Touch</a></li>
       </ul>
     </nav>
