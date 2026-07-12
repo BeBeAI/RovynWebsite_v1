@@ -9,6 +9,7 @@ interface ContactModalProps {
 export interface ContactFormData {
   name: string;
   email: string;
+  phone: string;
   company_size: string;
   interest: string;
   message: string;
@@ -18,6 +19,7 @@ export function ContactModal({ isOpen, onClose, onSubmit }: ContactModalProps) {
   const [formData, setFormData] = useState<ContactFormData>({
     name: '',
     email: '',
+    phone: '',
     company_size: '',
     interest: '',
     message: ''
@@ -33,13 +35,16 @@ export function ContactModal({ isOpen, onClose, onSubmit }: ContactModalProps) {
       setFormData({
         name: '',
         email: '',
+        phone: '',
         company_size: '',
         interest: '',
         message: ''
       });
+      alert('Message sent successfully!');
       onClose();
     } catch (error) {
       console.error('Error submitting form:', error);
+      alert('Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -75,6 +80,16 @@ export function ContactModal({ isOpen, onClose, onSubmit }: ContactModalProps) {
               placeholder="you@company.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              required
+            />
+          </div>
+          <div className="form-row">
+            <label>Phone Number</label>
+            <input
+              type="tel"
+              placeholder="+60 12-345 6789"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               required
             />
           </div>

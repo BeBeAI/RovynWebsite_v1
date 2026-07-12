@@ -8,11 +8,11 @@ import { Services } from './components/Services';
 import { Testimonials } from './components/Testimonials';
 import { CaseStudies } from './components/CaseStudies';
 import { CaseStudyDetail } from './components/CaseStudyDetail';
-import { FAQ } from './components/FAQ';
 import { CTA } from './components/CTA';
 import { Footer } from './components/Footer';
 import { ContactModal, ContactFormData } from './components/ContactModal';
 import { useScrollReveal } from './components/hooks/useScrollReveal';
+import { AiAssessment } from './components/AiAssessment';
 import { submitContactForm } from './components/lib/supabase';
 import './rovyn.css';
 
@@ -47,6 +47,7 @@ function App() {
               <CTA onGetInTouch={() => setIsModalOpen(true)} />
             </>
           } />
+          <Route path="/assessment" element={<AiAssessment />} />
           <Route path="/services" element={<Services onGetInTouch={() => setIsModalOpen(true)} />} />
           <Route path="/case-studies/:slug" element={<CaseStudyDetail />} />
         </Routes>

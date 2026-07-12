@@ -1,0 +1,32 @@
+name: Deploy Cloudflare Worker
+
+on:
+  push:
+    branches:
+      - codespace-super-train-r45jxrg5prxwfxqrj
+      - main
+
+jobs:
+  deploy:
+    name: Deploy worker
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Deploy with Wrangler
+        run: npx wrangler@latest deploy --legacy-env
+        env:
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
